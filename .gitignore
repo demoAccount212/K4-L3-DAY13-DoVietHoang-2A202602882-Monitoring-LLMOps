@@ -1,4 +1,6 @@
 .venv/
+.venv-dashboard/
+.idea/
 __pycache__/
 *.pyc
 .DS_Store

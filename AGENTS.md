@@ -36,21 +36,20 @@ python scripts/validate_logs.py
 python scripts/validate_dashboard.py
 ```
 
-## Critical TODOs (code has missing implementation)
+## Work Status (final — CP0–CP3 complete, pushed)
 
-These are the most important — an agent will likely miss them without help:
-
-- **`app/middleware.py`**: CorrelationIdMiddleware has 4 TODOs:
-  1. Clear contextvars to avoid leakage between requests (`clear_contextvars()`)
-  2. Extract `x-request-id` from headers or generate new one in format `req-<8-char-hex>`
-  3. Bind correlation_id to structlog contextvars (`bind_contextvars(correlation_id=correlation_id)`)
-  4. Add correlation_id and processing time to response headers
-
-- **`app/main.py` line 51-52**: Enrich logs with request context — uncomment and add `bind_contextvars(...)` with `user_id_hash`, `session_id`, `feature`, `model`, `env`
-
-- **`app/logging_config.py` line 45-46**: PII scrubbing processor is commented out — uncomment `scrub_event` in the processors list
-
-- **`app/pii.py` line 11**: TODO — add more patterns (e.g., Passport, Vietnamese address keywords)
+- **Commits**: `90cd1f4 Done CP0 + CP1` → `1b09812 CP2 + CP3` (code, config, docs, evidence 04–14, REPORT) → `0fa505d Update REPORT.md` (final SHA + checklist). `main` in sync with `origin/main`.
+- **CP0+CP1** (`90cd1f4`): correlation-id middleware (`req-<8hex>`, `x-request-id` + `x-response-time-ms` headers), contextvar enrichment (`user_id_hash`, `session_id`, `feature`, `model`, `env`), `scrub_event` enabled before `JsonlFileProcessor`, `tests/test_pii.py` +2 tests. `app/pii.py` intentionally keeps only the 4 required patterns (email, phone_vn, cccd, credit_card) — extra patterns risk over-redaction.
+- **CP2** (`1b09812`):
+  - Child observations: `@observe(name="retrieval", as_type="retriever")` on `mock_rag.retrieve`, `@observe(name="generation", as_type="generation")` on `FakeLLM.generate` (both `capture_input/output=False`); generation gets model/usage/cost via `get_client().update_current_generation(...)` when `tracing_enabled()`; prompt object linked via `propagate_attributes(prompt=...)` in `app/agent.py`.
+  - Prompt `day13-chat`: v1 (labels baseline+production), v2 (label candidate, adds "Trả lời ngắn gọn." line). Promote/rollback: `python scripts/prompt_labels.py promote|rollback|status` → restart API → 1 test request. Final state: production → v1.
+  - Dashboard: `scripts/dashboard.py` (Streamlit; venv riêng `.venv-dashboard` với `streamlit altair pandas pyyaml`; `streamlit run scripts/dashboard.py --server.port 8501`). 6 panel, refresh 30s, threshold lines từ YAML. Pandas 3.x lưu ý: `reindex()` làm mất index name — luôn `.rename_axis(...)` trước `reset_index()`; smoke test phải patch `st.fragment` về identity (bare mode KHÔNG chạy body fragment).
+  - `config/slo.yaml`: baseline measured + error budget examples; `config/alert_rules.yaml`: HighLatencyP95/ErrorRateHigh/CostSpike; `docs/alerts.md`: 3 runbooks (Metrics→Logs→Traces).
+- **CP3** (`1b09812`): challenge `day13-k4-l3b-monitoring-llmops-v1` điều tra xong — incident `rag_slow` đã `--disable` (`/health` all false); root cause: span `retrieval` 2501ms/2655ms (trace `1f9d341c6be2d17418045752ee22951f`, correlation `req-f3d3927f`); REPORT.md mục 7 điền đầy đủ. `config/challenge.json` KHÔNG commit (gitignored).
+- **Verifications (interpreter có đủ deps — xem note dưới)**: `pytest` 24 passed · `validate_logs.py` 100/100 · `validate_dashboard.py` 6/6 · Langfuse 143 traces hôm nay (root lab-agent-run + retrieval + generation).
+- **Evidence**: 01–14 đầy đủ trong `submission/evidence/` (13 là output text `13-incident-logs.jsonl`).
+- **REPORT.md**: hoàn chỉnh (mục 1–9), Commit SHA cuối = `1b09812443a005759fa8d052ada5291bdb3715fc`.
+- **Interpreter note**: `python` trên PATH KHÔNG ổn định (có thể trỏ tới venv khác lacking `langfuse` → pytest lỗi collect `test_tracing_adapter.py`). Dùng đúng venv có deps của lab: `D:\VINAI\K4-L3-Day11-DoVietHoang-2A202602882-Guardrails-HITL-Responsible-AI\.venv\Scripts\python.exe -m pytest -q`.
 
 ## Correlation ID Flow (critical for tracing)
 
