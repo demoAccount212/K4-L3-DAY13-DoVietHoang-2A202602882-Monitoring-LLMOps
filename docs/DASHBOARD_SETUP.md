@@ -19,6 +19,20 @@ Lab không bắt buộc một công cụ dashboard cụ thể. Bạn có thể d
 
 Giữ time range mặc định 60 phút, refresh 30 giây và hiển thị threshold/SLO line. Giá trị chính xác nằm trong `config/dashboard.yaml`; không tự đổi contract chỉ để ảnh dashboard đẹp hơn.
 
+## Dashboard Streamlit đi kèm
+
+Repo có sẵn dashboard [`../scripts/dashboard.py`](../scripts/dashboard.py) đọc trực tiếp `data/logs.jsonl` theo contract YAML: đủ sáu panel, mỗi panel có tên, đơn vị, time range 60 phút, refresh 30 giây (st.fragment) và đường threshold đỏ đứt lấy từ `threshold.value` trong YAML.
+
+Công cụ vẽ không nằm trong `requirements.txt` nên cài vào **venv riêng** (cài chung sẽ hạ phiên bản thư viện mà API đang dùng):
+
+```powershell
+python -m venv .venv-dashboard
+.venv-dashboard\Scripts\python -m pip install streamlit altair pandas pyyaml
+.venv-dashboard\Scripts\streamlit run scripts\dashboard.py --server.port 8501
+```
+
+Mở <http://localhost:8501>. Panel *Errors* tính retrieval success trên **mọi** event có field `tool_success` (gồm cả `request_failed`), đúng như gợi ý trong phần Mapping dữ liệu.
+
 ## Cách dựng
 
 1. Hoàn thiện logging/PII và chạy API.

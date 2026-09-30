@@ -7,6 +7,33 @@ primary_slo:
     total_event: 'event == "request_received"'
   target_percent: 99.5
   error_budget_percent: 0.5
+  # Error budget quy ra số request (cửa sổ 28 ngày):
+  #   0.5% của 10,000 request  = 50 request được phép chậm (>3000ms) hoặc lỗi
+  #   0.5% của 100,000 request = 500 request
+  #   0.5% của 1,000,000 request = 5,000 request
+  # Số request thực tế ước tính: lab chạy ~48 request/giờ khi demo => ~1,344 request/28 ngày
+  #   => error budget thực tế ≈ 6 request không đạt SLO trong 28 ngày.
+  error_budget_requests_examples:
+    - total_requests: 10000
+      allowed_bad_requests: 50
+    - total_requests: 100000
+      allowed_bad_requests: 500
+  baseline_2026_09_30:
+    note: >-
+      Baseline đo từ data/logs.jsonl (48 request đầu tiên của ca lab):
+      latency p50=152ms, p95=1753ms, p99=2501ms; error_rate=0%;
+      retrieval_success=100%; cost=$0.10; quality_avg=0.871.
+      P95=1753ms vẫn dưới ngưỡng SLO 3000ms nên giữ nguyên target 99.5%.
+      Các request chậm (~1.4-2.5s) chủ yếu do lần fetch prompt đầu tiên tới
+      Langfuse Cloud bị timeout mạng, không phải do RAG/LLM — nếu tái diễn,
+      xem xét bật prompt cache hoặc pre-warm khi khởi động service.
+    latency_p50_ms: 152
+    latency_p95_ms: 1753
+    latency_p99_ms: 2501
+    error_rate_pct: 0.0
+    retrieval_success_rate_pct: 100.0
+    cost_usd_per_hour: 0.15
+    quality_score_avg: 0.871
   note: Học viên phải giải thích hoặc điều chỉnh ngưỡng bằng baseline của mình. Ví dụ nếu có 10,000 request trong cửa sổ 28 ngày, error budget 0.5% nghĩa là tối đa 50 request được phép không đạt SLO.
 guardrails:
   error_rate_pct_max: 2

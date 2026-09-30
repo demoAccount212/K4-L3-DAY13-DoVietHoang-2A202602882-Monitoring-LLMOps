@@ -1,25 +1,28 @@
 alerts:
-  - name: TODO_alert_1
-    severity: TODO
-    condition: TODO
-    duration: TODO
+  - name: HighLatencyP95
+    severity: high
+    condition: 'p95(response_sent.latency_ms) > 3000ms sustained for 5 minutes'
+    duration: 5m
     type: symptom-based
     channel: slack
-    owner: TODO
+    slack_channel: '#k4-l3b-alerts'
+    owner: student-2A202602882
     runbook: docs/alerts.md#alert-1
-  - name: TODO_alert_2
-    severity: TODO
-    condition: TODO
-    duration: TODO
+  - name: ErrorRateHigh
+    severity: critical
+    condition: 'error_rate_pct = count(request_failed) / count(request_received) * 100 > 2 sustained for 5 minutes'
+    duration: 5m
     type: symptom-based
     channel: slack
-    owner: TODO
+    slack_channel: '#k4-l3b-alerts'
+    owner: student-2A202602882
     runbook: docs/alerts.md#alert-2
-  - name: TODO_alert_3
-    severity: TODO
-    condition: TODO
-    duration: TODO
+  - name: CostSpike
+    severity: medium
+    condition: 'sum(cost_usd) over trailing 24h > 2.5 USD (daily_cost_usd_max) sustained for 10 minutes'
+    duration: 10m
     type: symptom-based
     channel: slack
-    owner: TODO
+    slack_channel: '#k4-l3b-alerts'
+    owner: student-2A202602882
     runbook: docs/alerts.md#alert-3
